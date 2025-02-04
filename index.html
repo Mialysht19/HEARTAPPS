@@ -3,154 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Epic Love App</title>
+    <title>Extreme 3D Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        body { 
-            display: flex; 
-            flex-direction: column;
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            background: radial-gradient(circle, #ff007f, #ff416c, #ff5733);
-            margin: 0;
-            overflow: hidden;
-        }
-        .heart {
-            position: relative;
-            width: 150px;
-            height: 150px;
-            background-color: red;
-            transform: rotate(-45deg);
-            animation: beat 0.8s infinite;
-            box-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
-        }
-        .heart:before,
-        .heart:after {
-            content: "";
-            position: absolute;
-            width: 150px;
-            height: 150px;
-            background-color: red;
-            border-radius: 50%;
-            box-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
-        }
-        .heart:before {
-            top: -75px;
-            left: 0;
-        }
-        .heart:after {
-            top: 0;
-            left: 75px;
-        }
-        @keyframes beat {
-            0%, 100% { transform: scale(1) rotate(-45deg); }
-            50% { transform: scale(1.3) rotate(-45deg); }
-        }
-        .particles {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-        .btn-container {
-            position: absolute;
-            bottom: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        button {
-            background: #fff;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            font-size: 16px;
-            border-radius: 5px;
-        }
-        .message {
-            position: absolute;
-            font-size: 20px;
-            color: white;
-            animation: fadeOut 2s forwards;
-        }
-        @keyframes fadeOut {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-50px); }
-        }
+        body { margin: 0; overflow: hidden; background: black; }
+        canvas { display: block; }
     </style>
 </head>
 <body>
-    <div class="heart"></div>
-    <canvas class="particles"></canvas>
-    <div class="btn-container">
-        <button onclick="changeHeartColor()">Tukar Warna Hati</button>
-        <button onclick="changeBackground()">Tukar Latar</button>
-    </div>
     <script>
-        const canvas = document.querySelector(".particles");
-        const ctx = canvas.getContext("2d");
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        let particles = [];
-        const heart = document.querySelector(".heart");
-        
-        function createParticles(x, y) {
-            for (let i = 0; i < 20; i++) {
-                particles.push({
-                    x: x,
-                    y: y,
-                    size: Math.random() * 5 + 2,
-                    speedX: (Math.random() - 0.5) * 5,
-                    speedY: (Math.random() - 0.5) * 5,
-                    alpha: 1
-                });
+        let scene, camera, renderer;
+        let player, speed = 0.1;
+        let obstacles = [];
+        let score = 0;
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            let light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(5, 5, 5).normalize();
+            scene.add(light);
+
+            player = new THREE.Mesh(
+                new THREE.BoxGeometry(1, 1, 1),
+                new THREE.MeshStandardMaterial({ color: 0xff0000 })
+            );
+            scene.add(player);
+            player.position.z = 5;
+
+            spawnObstacles();
+            camera.position.z = 10;
+            animate();
+        }
+
+        function spawnObstacles() {
+            for (let i = 0; i < 5; i++) {
+                let obstacle = new THREE.Mesh(
+                    new THREE.BoxGeometry(1, 1, 1),
+                    new THREE.MeshStandardMaterial({ color: 0x00ff00 })
+                );
+                obstacle.position.set(Math.random() * 6 - 3, Math.random() * 6 - 3, -10 - Math.random() * 20);
+                scene.add(obstacle);
+                obstacles.push(obstacle);
             }
         }
 
-        function animateParticles() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach((p, index) => {
-                p.x += p.speedX;
-                p.y += p.speedY;
-                p.alpha -= 0.02;
-                ctx.globalAlpha = p.alpha;
-                ctx.fillStyle = "rgba(255, 0, 0, 1)";
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fill();
-                if (p.alpha <= 0) particles.splice(index, 1);
+        function animate() {
+            requestAnimationFrame(animate);
+            player.position.x += speed;
+
+            obstacles.forEach(obstacle => {
+                obstacle.position.z += 0.1;
+                if (obstacle.position.z > 10) {
+                    obstacle.position.z = -20;
+                    obstacle.position.x = Math.random() * 6 - 3;
+                    obstacle.position.y = Math.random() * 6 - 3;
+                    score++;
+                    console.log("Score:", score);
+                }
+                if (player.position.distanceTo(obstacle.position) < 1) {
+                    console.log("Game Over! Final Score:", score);
+                    document.body.innerHTML = `<h1 style='color:white;text-align:center;'>Game Over! Score: ${score}</h1>`;
+                }
             });
-            requestAnimationFrame(animateParticles);
+
+            renderer.render(scene, camera);
         }
-        
-        document.body.addEventListener("click", (e) => {
-            createParticles(e.clientX, e.clientY);
-            showMessage(e.clientX, e.clientY);
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "ArrowLeft") player.position.x -= 0.5;
+            if (event.key === "ArrowRight") player.position.x += 0.5;
+            if (event.key === "ArrowUp") player.position.y += 0.5;
+            if (event.key === "ArrowDown") player.position.y -= 0.5;
         });
-        
-        function changeHeartColor() {
-            const colors = ["red", "blue", "green", "purple", "yellow"];
-            heart.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-        }
-        
-        function changeBackground() {
-            const colors = ["#ff007f", "#ff416c", "#ff5733", "#a4508b", "#ffcc00"];
-            document.body.style.background = `radial-gradient(circle, ${colors[Math.floor(Math.random() * colors.length)]}, #000)`;
-        }
-        
-        function showMessage(x, y) {
-            const messages = ["Love!", "Sweet!", "Cute!", "Wow!", "Amazing!"];
-            const msg = document.createElement("div");
-            msg.classList.add("message");
-            msg.style.left = `${x}px`;
-            msg.style.top = `${y}px`;
-            msg.textContent = messages[Math.floor(Math.random() * messages.length)];
-            document.body.appendChild(msg);
-            setTimeout(() => msg.remove(), 2000);
-        }
-        
-        animateParticles();
+
+        window.addEventListener("resize", () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+
+        init();
     </script>
 </body>
 </html>
+
