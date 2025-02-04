@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Epic Love Animation</title>
+    <title>Epic Love App</title>
     <style>
         body { 
             display: flex; 
+            flex-direction: column;
             justify-content: center; 
             align-items: center; 
             height: 100vh; 
@@ -53,19 +54,47 @@
             height: 100%;
             pointer-events: none;
         }
+        .btn-container {
+            position: absolute;
+            bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            background: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        .message {
+            position: absolute;
+            font-size: 20px;
+            color: white;
+            animation: fadeOut 2s forwards;
+        }
+        @keyframes fadeOut {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-50px); }
+        }
     </style>
 </head>
 <body>
     <div class="heart"></div>
     <canvas class="particles"></canvas>
+    <div class="btn-container">
+        <button onclick="changeHeartColor()">Tukar Warna Hati</button>
+        <button onclick="changeBackground()">Tukar Latar</button>
+    </div>
     <script>
         const canvas = document.querySelector(".particles");
         const ctx = canvas.getContext("2d");
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-
         let particles = [];
-
+        const heart = document.querySelector(".heart");
+        
         function createParticles(x, y) {
             for (let i = 0; i < 20; i++) {
                 particles.push({
@@ -94,11 +123,33 @@
             });
             requestAnimationFrame(animateParticles);
         }
-
+        
         document.body.addEventListener("click", (e) => {
             createParticles(e.clientX, e.clientY);
+            showMessage(e.clientX, e.clientY);
         });
-
+        
+        function changeHeartColor() {
+            const colors = ["red", "blue", "green", "purple", "yellow"];
+            heart.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        }
+        
+        function changeBackground() {
+            const colors = ["#ff007f", "#ff416c", "#ff5733", "#a4508b", "#ffcc00"];
+            document.body.style.background = `radial-gradient(circle, ${colors[Math.floor(Math.random() * colors.length)]}, #000)`;
+        }
+        
+        function showMessage(x, y) {
+            const messages = ["Love!", "Sweet!", "Cute!", "Wow!", "Amazing!"];
+            const msg = document.createElement("div");
+            msg.classList.add("message");
+            msg.style.left = `${x}px`;
+            msg.style.top = `${y}px`;
+            msg.textContent = messages[Math.floor(Math.random() * messages.length)];
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 2000);
+        }
+        
         animateParticles();
     </script>
 </body>
